@@ -1,0 +1,133 @@
+;; ,----
+;; |
+;; | emacs configuration
+;; |
+;; | Made by guilbe_p <guilbe_p@epita.fr>
+;; |
+;; | Based on mefyl <mefyl@lrde.epita.fr> configuration
+;; | Thanks to baptiste afsa <afsa_b@epita.fr> for his help
+;; |
+;; `----
+;;(load "std.el")
+;;(load "std_comment.el")
+;;(load "~/.emacs.d/ruby-electric.el")
+(global-font-lock-mode 't)
+(setq inhibit-startup-message t)
+(setq transient-mark-mode t)
+(setq column-number-mode t)
+(setq line-number-mode t)
+(setq frame-title-format "%b")
+(setq-default show-trailing-whitespace t)
+
+;;(set-terminal-coding-system 'latin-1)
+;;(set-keyboard-coding-system 'latin-1)
+;;(set-language-environment 'latin-1)
+;;(set-input-mode nil nil t)
+
+(setq text-mode-hook 'turn-on-auto-fill)
+(setq fill-column 80)
+(setq tuareg-mode-hook 'turn-on-auto-fill)
+(setq fill-column 80)
+(setq emacs-lisp-mode-hook 'turn-on-auto-fill)
+(setq fill-column 80)
+(setq c-mode-hook 'turn-on-auto-fill)
+(setq fill-column 80)
+;;global key binding
+(global-set-key [(control c) (l)] 'checkdoc-rogue-spaces)
+(global-set-key [(meta p)] 'compile)
+(global-set-key [(control c) (control d)] 'comment-region)
+(global-set-key [(control c) (control f)] 'uncomment-region)
+(global-set-key [(control c) (v)] 'yank)
+(global-set-key [(control c) (c)] 'kill-ring-save)
+(global-set-key [(meta g)] 'goto-line)
+;; iwannna go to the next window
+(global-set-key [(A-left)] 'windmove-left)
+(global-set-key [(A-right)] 'windmove-right)
+(global-set-key [(A-up)] 'windmove-up)
+(global-set-key [(A-down)] 'windmove-down)
+;;iwanna undo
+(global-set-key [(control c)(z)] 'undo)
+;;
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;;for ido-mode
+
+;;(when (string-match "^22." emacs-version) (ido-mode))
+(ido-mode)
+(show-paren-mode t) ;; for seeing parenthesis
+;;(setq-default indent-tabs-mode 8)
+;;
+
+;; tuareg-mode
+(setq load-path (cons "~/.emacs.d/tuareg-mode/" load-path))
+(setq auto-mode-alist (cons '("\\.ml\\w?" . tuareg-mode)
+			    auto-mode-alist))
+(setq auto-mode-alist (cons '("\\.rb\\w?" . ruby-mode) auto-mode-alist))
+(autoload 'tuareg-mode "tuareg" "Mode Majeur pour editer ton cul" t)
+(autoload 'camldebug "camldebug" "execute une bug sur ton quebecois" t)
+
+;; cc-mode-manuel
+(defun insert-header-guard ()
+  (interactive)
+   (save-excursion ; keep the initial position of the function call
+    (when (buffer-file-name)
+        (let*
+            ((name (file-name-nondirectory buffer-file-name))
+             (macro (replace-regexp-in-string
+                     "\\." "_"
+                     (replace-regexp-in-string
+                      "-" "_"
+		      (replace-regexp-in-string
+		       "h" "h_"
+                      (upcase name))))))
+          (goto-char (point-min))
+          (insert "#ifndef " macro "\n")
+          (insert "# define " macro "\n\n")
+          (goto-char (point-max))
+          (insert "\n#endif\n")))))
+
+(defun insert-header-inclusion ()
+  (interactive)
+  (when (buffer-file-name)
+    (let
+        ((name
+          (replace-regexp-in-string ".c$" ".h"
+          (replace-regexp-in-string ".cc$" ".hh"
+                                    (file-name-nondirectory buffer-file-name)))))
+      (insert "#include \"" name "\"\n\n"))))
+
+; Auto insert C/C++ header guard
+(add-hook 'find-file-hooks
+	  (lambda ()
+	    (when (and (memq major-mode '(c-mode c++-mode)) (equal (point-min) (point-max)) (string-match ".*\\.hh?" (buffer-file-name)))
+	      (insert-header-guard)
+	      (goto-line 3)
+	      (insert "\n"))))
+(add-hook 'find-file-hooks
+	  (lambda ()
+	    (when (and (memq major-mode '(c-mode c++-mode)) (equal (point-min) (point-max)) (string-match ".*\\.cc?" (buffer-file-name)))
+	      (insert-header-inclusion))))
+
+; Start code folding mode in C/C++ mode
+(add-hook 'c-mode-common-hook (lambda () (hs-minor-mode 1)))
+
+
+;; ruby-electric-mode
+(defun my-ruby-mode-hook ()
+  (ruby-electric-mode)
+  )
+(add-hook 'ruby-mode-hook 'my-ruby-mode-hook)
+
+;; i wanna delete all these shits
+(setq delete-auto-save-files t)
+(setq delete-old-versions t)
+(setq normal-erase-is-backspace-mode t)
+(setq make-backup-files nil)
+
+;; debug mode don't switch to GDB-mode buffers
+;;(setq ido-ignore-buffers (quote ("\\'\\*breakpoints_of.*\\*\\'"
+;;                                 "\\'\\*stack frames of.*\\*\\'"
+;;                                 "\\'\\*gud\\*\\'"
+ ;;                                "\\'\\*locals of.*\\*\\'"  "\\' ")))
+;; better gdb
+;;(setq-default gdb-many-windows t)
